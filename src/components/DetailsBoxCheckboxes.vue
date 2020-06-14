@@ -1,3 +1,16 @@
+<!-- A box with title and checkbox options.
+
+Provides a box with a list of checkboxes, one per field. Each field
+has an 'selected' boolean attribute which indicates whether or not
+the checkbox should be checked.
+
+'fields' prop is synchronized with v-bind:fields.sync="<variable>".
+
+Props:
+  title: Title of box.
+  fields: List of checkbox items.
+
+-->
 <template>
   <div class="details-box col-md-12 mt-3 mb-3 pt-3 pb-3 border rounded">
     <div class="details-box-title row pl-3 mb-3">
@@ -29,9 +42,15 @@
 import { Component, Vue, Prop } from "vue-property-decorator";
 
 export interface Field {
+  // Unique identifier for this field. Must be unique across all elements of
+  // 'fields'.
+  id: number;
+
+  // Human-readable name for this checkbox.
   name: string;
-  value: any;
-  editable: boolean;
+
+  // Whether or not this box is checked.
+  selected: boolean;
 }
 
 @Component({
