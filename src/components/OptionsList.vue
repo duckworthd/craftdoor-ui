@@ -3,7 +3,7 @@
     <ul class="text-left">
       <li
           v-for="option in filteredOptions"
-          v-on:click="$emit('selected', option)"
+          v-on:click="updateSelected(option)"
           :key="option.id">
         {{ option.name }}
       </li>
@@ -23,7 +23,8 @@ interface Option {
 const OptionsListProps = Vue.extend({
   props: {
     filter: String,
-    options: Array
+    options: Array,
+    selected: Object,
   }
 })
 
@@ -42,6 +43,10 @@ export default class OptionsList extends OptionsListProps {
     }
 
     return this.options.filter(shouldKeep)
+  }
+
+  updateSelected(option: any) {
+    this.$emit('update:selected', option);
   }
 }
 </script>
