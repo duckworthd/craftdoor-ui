@@ -3,8 +3,14 @@ import App from "./App.vue";
 import router from "./router";
 import store from "./store";
 import Buefy from "buefy";
+import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
+
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
 import "buefy/dist/buefy.css";
 
+Vue.use(BootstrapVue)
+Vue.use(BootstrapVueIcons)
 Vue.use(Buefy);
 Vue.config.productionTip = false;
 

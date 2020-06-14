@@ -32,3 +32,31 @@ export interface Key {
   secret: string;
   access_key: string;
 }
+
+
+// MemberInfo
+export interface MemberInfo {
+  field: string;
+  name: string;
+  value: number | string | boolean;
+  editable: boolean;
+}
+
+export interface MemberRoleInfo {
+  id: number;
+  name: string;
+  selected: boolean;
+}
+
+export interface MemberKeyInfo {
+  id: number;
+  name: string;
+  selected: boolean;
+}
+
+
+export interface MemberDetails {
+  info: MemberInfo[];
+  roles: MemberRoleInfo[];
+  keys: MemberKeyInfo[];
+}
