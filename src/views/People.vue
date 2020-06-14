@@ -24,14 +24,10 @@
     <div class="row">
       <!-- Left-hand side menu for choosing a person. -->
       <div class="options-panel col-md-3">
-        <search-bar 
-          v-bind:query.sync="searchQuery"
-          ></search-bar>
-        <options-list
-            v-bind:filter="searchQuery"
+        <searchable-options-list 
             v-bind:options="members"
-            v-bind:selected.sync="selectedMember">
-        </options-list>
+            v-bind:selected.sync="selectedMember"
+          ></searchable-options-list>
       </div>
 
       <!-- Right-hand side details view for a person. -->
@@ -60,25 +56,18 @@ import { Component, Vue, Watch } from "vue-property-decorator";
 import { Member, MemberDetails } from "@/interfaces/api";
 import DetailsBoxForm from "@/components/DetailsBoxForm.vue";
 import DetailsBoxCheckboxes from "@/components/DetailsBoxCheckboxes.vue";
-import OptionsList from "@/components/OptionsList.vue";
-import SearchBar from "@/components/SearchBar.vue";
+import SearchableOptionsList from "@/components/SearchableOptionsList.vue";
 import MemberHelper from "@/helpers/members.helper";
 import _ from 'lodash';
 
 @Component({
   components: { 
-    SearchBar, 
-    OptionsList, 
+    SearchableOptionsList, 
     DetailsBoxForm, 
     DetailsBoxCheckboxes,
   }
 })
 export default class People extends Vue {
-  // Search Filter
-  //
-  // TODO(duckworthd): Bundle search and members list into a single component.
-  searchQuery = "";
-
   // List of all members.
   members: Member[] = [];
 
