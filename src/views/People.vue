@@ -1,178 +1,78 @@
 <template>
   <div class="people-view container">
-    <div class="control-menu row">
-      <!-- Spacing -->
-      <div class="col-md-8"></div>
-
-      <!-- Buttons at the very top of the view. -->
-      <div class="col-md-4">
-        <button type="button"
-            v-on:click="createNewMember">
-          New
-        </button>
-        <button type="button" 
-            v-on:click="syncSelectedMember">
-          Update
-        </button>
-        <button type="button" 
-            v-on:click="deleteSelectedMember">
-          Delete
-        </button>
-      </div>
-    </div>
-
-    <div class="row">
-      <!-- Left-hand side menu for choosing a person. -->
-      <div class="options-panel col-md-3">
-        <searchable-options-list 
-            v-bind:options="members"
-            v-bind:selected.sync="selectedMember"
-          ></searchable-options-list>
-      </div>
-
-      <!-- Right-hand side details view for a person. -->
-      <div class="details-panel col-md-9">
-        <div class="details-panel" v-if="selectedMemberDetails != null">
-          <details-box-form 
+    <craftdoor-vue v-bind:api="api"
+        v-bind:selected-entity-details.sync="selectedEntityDetails">
+      <div class="details-panel" v-if="selectedEntityDetails != null">
+        <details-box-form 
               title="Info"
-              v-bind:fields.sync="selectedMemberDetails.info">
-          </details-box-form>
-          <details-box-checkboxes 
-              title="Roles" 
-              v-bind:fields.sync="selectedMemberDetails.roles">
-          </details-box-checkboxes>
-          <details-box-checkboxes 
-              title="Keys"
-              v-bind:fields.sync="selectedMemberDetails.keys">
-          </details-box-checkboxes>
-        </div>
+              v-bind:fields="selectedEntityDetails.info">
+        </details-box-form>
+        <details-box-checkboxes 
+            title="Roles" 
+            v-bind:fields="selectedEntityDetails.roles">
+        </details-box-checkboxes>
+        <details-box-checkboxes 
+            title="Keys"
+            v-bind:fields="selectedEntityDetails.keys">
+        </details-box-checkboxes>
       </div>
-    </div>
+    </craftdoor-vue>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from "vue-property-decorator";
+import { Component, Vue } from "vue-property-decorator";
 import { Member, MemberDetails } from "@/interfaces/api";
+import CraftdoorVue, { EntityApi } from "@/components/Craftdoor.vue";
 import DetailsBoxForm from "@/components/DetailsBoxForm.vue";
 import DetailsBoxCheckboxes from "@/components/DetailsBoxCheckboxes.vue";
-import SearchableOptionsList from "@/components/SearchableOptionsList.vue";
 import MemberHelper from "@/helpers/members.helper";
-import _ from 'lodash';
+
+class MembersApi implements EntityApi {
+  getDetails(memberId: number): Promise<MemberDetails> {
+    return MemberHelper.getMemberDetails(memberId);
+  }
+
+  list(): Promise<Array<Member>> {
+    return MemberHelper.listMembers();
+  }
+
+  newEmptyDetails(): Promise<MemberDetails> {
+    return MemberHelper.newEmptyMemberDetails();
+  }
+
+  insertDetails(memberDetails: MemberDetails): Promise<MemberDetails> {
+    return MemberHelper.insertMemberDetails(memberDetails);
+  }
+
+  updateDetails(memberDetails: MemberDetails): Promise<MemberDetails> {
+    return MemberHelper.updateMemberDetails(memberDetails);
+  }
+
+  delete(memberId: number): Promise<MemberDetails> {
+    return MemberHelper.deleteMember(memberId);
+  }
+
+  simplifyDetails(memberDetails: MemberDetails): Member {
+    return MemberHelper.simplifyMemberDetails(memberDetails);
+  }
+}
 
 @Component({
   components: { 
-    SearchableOptionsList, 
+    CraftdoorVue,
     DetailsBoxForm, 
     DetailsBoxCheckboxes,
   }
 })
-export default class People extends Vue {
-  // List of all members.
-  members: Member[] = [];
+export default class PeopleVue extends Vue {
+  // Details of currently selected entity shown on RHS.
+  selectedEntityDetails: MemberDetails | null = null;
 
-  // Details of currently selected member shown on RHS.
-  selectedMember: Member | null = null;
-  selectedMemberDetails: MemberDetails | null = null;
-
-  // Creates a new, empty person.
-  async createNewMember() {
-    console.log('newMember()');
-    this.selectedMember = null;
-    this.selectedMemberDetails = await MemberHelper.newEmptyMemberDetails();
-  }
-
-  // Update all properties of selectedMemberDetails with the server.
-  async syncSelectedMember() {
-    console.log('syncSelectedMember()');
-    console.log(JSON.stringify(this.selectedMemberDetails));
-
-    if (this.selectedMemberDetails == null) {
-      // TODO(duckworthd): Show an error message if this happens.
-      return;
-    }
-
-    if (this.selectedMemberDetails.id == null) {
-      console.log('This is a new member.');
-      return (MemberHelper
-          .insertMemberDetails(this.selectedMemberDetails)
-          .then(memberDetails => this.setSelectedMemberById(memberDetails.id))
-          .then(this.reloadMembers)
-          .then(this.reloadSelectedMemberDetails));
-    }
-
-    console.log('This is an existing member.');
-    return (MemberHelper
-        .updateMemberDetails(this.selectedMemberDetails)
-        .then(this.reloadMembers)
-        .then(this.reloadSelectedMemberDetails));
-  }
-
-  async deleteSelectedMember() {
-    console.log('deleteSelectedMember()');
-    console.log(JSON.stringify(this.selectedMember));
-    if (this.selectedMember == null) {
-      // TODO(duckworthd): Show an error message if this happens.
-      return;
-    }
-
-    // TODO(duckworthd): Set selected member to null after successful deletion.
-    return (MemberHelper
-        .deleteMember(this.selectedMember.id)
-        .then(value => this.setSelectedMemberById(null))
-        .then(this.reloadMembers)
-        .then(this.reloadSelectedMemberDetails));
-  }
-
-  async setSelectedMemberById(memberId: number | null) {
-    if (memberId == null) {
-      this.selectedMember = null;
-      return;
-    }
-
-    // TODO(duckworthd): Simplify logic for finding the name of a member.
-    const memberDetails = await MemberHelper.getMemberDetails(memberId);
-    const memberName = MemberHelper.nameFromMemberDetails(memberDetails);
-    this.selectedMember = {
-      id: memberId,
-      name: memberName,
-    };
-  }
-
-  // Reload list of active members.
-  async reloadMembers() {
-    console.log('reloadMembers()');
-    this.members = await MemberHelper.listMembers();
-  }
-
-  // Reload member selected from 'members'.
-  @Watch('selectedMember')
-  async reloadSelectedMemberDetails() {
-    console.log('reloadSelectedMemberDetails()');
-
-    // No member has been selected yet.
-    if (this.selectedMember == null) {
-      this.selectedMemberDetails = null;
-      return;
-    }
-
-    // This is a new member that doesn't yet have an id.
-    if (this.selectedMember.id == null) {
-      this.selectedMemberDetails = null;
-      return;
-    }
-
-    this.selectedMemberDetails = await MemberHelper.getMemberDetails(this.selectedMember.id);
-  }
-
-  // Called by Vue on initialization.
-  async mounted() {
-    console.log('mounted()')
-    await this.reloadMembers();
-  }
+  // Interface to backend.
+  api = new MembersApi()
 }
 </script>
 
 <style scoped lang="scss">
-
 </style>

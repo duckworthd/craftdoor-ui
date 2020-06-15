@@ -1,5 +1,6 @@
 import axios from "@/axios";
 import { Member, MemberRole, MemberDetails, MemberRoleInfo, MemberKeyInfo, MemberInfo } from "@/interfaces/api";
+import { findField, setFieldRandomly } from "@/helpers/utils";
 import _ from 'lodash'
 
 
@@ -20,40 +21,8 @@ const ALL_MEMBER_KEY_INFO: Array<MemberKeyInfo> = [
   {id: 1, name: '0xffa18d2a', selected: false},
 ];
 
-// Any object that has a "field" attribute.
-interface HasFieldAttr {
-  field: string;
-}
-
-// Finds the element in an array such that elem.field == field.
-function findField<T extends HasFieldAttr>(
-  field: string,
-  values: Array<T>,
-): (T | null) {
-  for (const value of values) {
-    if (value.field == field) {
-      return value;
-    }
-  }
-  return null;
-}
-
-// Sets obj[field] = <random choice from values>.
-function setFieldRandomly(field: string, values: Array<any>) {
-  function set<T>(obj: T): T {
-    const result =  _.cloneDeep(obj);
-    result[field] = _.sample(values);
-    return result
-  }
-  return set;
-}
-
 // Generate a member with randomly-assigned roles and keys.
-function generateMemberDetails(
-  id: number,
-  name: string,
-  last_seen: string
-): MemberDetails {
+function generateMemberDetails(id: number, name: string, last_seen: string): MemberDetails {
   // TODO(duckworthd): Merge MemberDetails.info and Member in a reasonable way.
   const info: MemberInfo[] = [
     {
@@ -102,6 +71,17 @@ const ALL_MEMBER_DETAILS: Array<MemberDetails> = [
 ////////////////////////////////////////////////////////////////////////////////
 
 const MemberHelper = {
+  // Converts a MemberDetails object to a Members object.
+  //
+  // TODO(duckworthd): Find a way to remove this function. One should be able to access
+  // MemberDetails.name as a property.
+  simplifyMemberDetails(memberDetails: MemberDetails): Member {
+    const field: MemberInfo = findField("name", memberDetails.info) as MemberInfo;
+    return {
+      id: memberDetails.id as number,
+      name: field.value as string,
+    };
+  },
 
   // Creates a new, empty placeholder member.
   //
@@ -243,15 +223,6 @@ const MemberHelper = {
     );
   },
 
-  // Extracts the name of a member from a MemberDetails instance.
-  //
-  // TODO(duckworthd): Find a way to remove this function. One should be able to access
-  // MemberDetails.name as a property.
-  nameFromMemberDetails(memberDetails: MemberDetails): string {
-    const field: MemberInfo = findField("name", memberDetails.info) as MemberInfo;
-    return field.value as string;
-  },
-
   async create(t: Member): Promise<Member> {
     const url = `${CONFIG.API_ENDPOINT}/members`;
     return await axios.post(url, t);
@@ -272,8 +243,6 @@ const MemberHelper = {
     const url = `${CONFIG.API_ENDPOINT}/members/${id}`;
     return await axios.delete(url);
   }
-
-
 };
 
 export default MemberHelper;
