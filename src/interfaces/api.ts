@@ -90,3 +90,29 @@ export interface MemberDetails {
   // own.
   keys: MemberKeyInfo[];
 }
+
+export interface RoleInfo {
+  field: string;
+  name: string;
+  value: number | string | boolean;
+  editable: boolean;
+}
+
+export interface RoleDoorInfo {
+  id: number;
+  name: string;
+  selected: boolean;
+}
+
+export interface RolePersonInfo {
+  id: number;
+  name: string;
+  selected: boolean;
+}
+
+export interface RoleDetails {
+  id: number | null;
+  info: RoleInfo[];
+  doors: RoleDoorInfo[];
+  people: RolePersonInfo[];
+}
