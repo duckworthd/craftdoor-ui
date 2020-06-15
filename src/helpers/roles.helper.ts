@@ -60,7 +60,7 @@ const ALL_ROLE_DETAILS: Array<RoleDetails> = [
   generateDetails(2, "Member"),
   generateDetails(3, "Metal Shop"),
   generateDetails(4, "Owner"),
-  generateDetails(4, "Visitor"),
+  generateDetails(5, "Visitor"),
 ];
 ////////////////////////////////////////////////////////////////////////////////
 // End mock backend.

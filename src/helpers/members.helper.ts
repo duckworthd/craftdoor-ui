@@ -18,7 +18,7 @@ const ALL_MEMBER_ROLE_INFO: Array<MemberRoleInfo> = [
 ];
 const ALL_MEMBER_KEY_INFO: Array<MemberKeyInfo> = [
   {id: 1, name: '0x12ab34cd', selected: false},
-  {id: 1, name: '0xffa18d2a', selected: false},
+  {id: 2, name: '0xffa18d2a', selected: false},
 ];
 
 // Generate a member with randomly-assigned roles and keys.
