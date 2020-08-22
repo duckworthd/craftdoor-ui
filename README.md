@@ -1,24 +1,33 @@
 # craftdoor-ui
 
-## Project setup
-```
-npm install
-```
+This nodejs project is the webapp frontend for [craftdoor](https://github.com/pakohan/craftdoor). It communicates with craftdoor via a REST API.
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+## Installation
 
-### Compiles and minifies for production
-```
-npm run build
-```
+1. Install `node` and `npm`. The latest version available in `apt-get` may be too old. Instead, follow instructions [here](https://github.com/nodesource/distributions/blob/master/README.md#debinstall),
+  ```
+  $ curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+  $ sudo apt-get install -y nodejs
+  ```
+1. Install project dependencies,
+  ```
+  $ npm install
+  ```
+1. Serve development version of the HTML locally,
+  ```
+  $ npm run serve
+  ```
 
-### Lints and fixes files
-```
-npm run lint
-```
+## Deploying
 
-### Customize configuration
+1. Compile and minify code for production,
+  ```
+  $ npm run build
+  ```
+1. Run linter,
+  ```
+  $ npm run lint
+  ```
+
+###Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
