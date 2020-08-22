@@ -27,7 +27,8 @@ Props:
               type="checkbox" 
               v-bind:name="field.id"
               v-model="field.selected"
-              v-on:click="updateFields">
+              v-on:click="updateFields"
+              :disabled="!field.editable">
           <label class="form-check-label"
               v-bind:for="field.id">
             {{ field.name }}

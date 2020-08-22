@@ -5,15 +5,14 @@ export interface Member {
 
 export interface Key {
   id: number;
-  uuid: string;
-  member_id: number;
+  name: string;
 }
 
 
-// A single field about a member. For example, 'id' or 'name'.
-export interface MemberInfo {
+// A single named field. For example, 'id' or 'name'.
+export interface Field {
   // Name of field. e.g. 'id' or 'name'.
-  field: string;
+  id: string;
 
   // Human-readable name of field. e.g. "ID" or "Name".
   name: string;
@@ -35,6 +34,9 @@ export interface MemberKeyInfo {
 
   // True if current member owns this key.
   selected: boolean;
+
+  // Can this field be edited by the UI?
+  editable: boolean;
 }
 
 // All details about a member.
@@ -44,9 +46,22 @@ export interface MemberDetails {
   id: number | null;
 
   // Information about this member. e.g. id, name, ...
-  info: MemberInfo[];
+  info: Field[];
 
   // Keys available to this member. Includes keys this member does not
   // own.
   keys: MemberKeyInfo[];
+}
+
+export interface KeyMemberInfo {
+  id: number;
+  name: string;
+  selected: boolean;
+  editable: boolean;
+}
+
+export interface KeyDetails {
+  id: number | null;
+  info: Field[];
+  members: KeyMemberInfo[];
 }

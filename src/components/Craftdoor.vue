@@ -45,22 +45,24 @@ import SearchableOptionsList from "@/components/SearchableOptionsList.vue";
 export interface Entity {
   id: number;
 }
+
 export interface EntityDetails {
   id: number | null;
 }
+
 export interface EntityApi {
   // Stateless.
-  getDetails(entityId: number): Promise<EntityDetails>;
+  details(entityId: number): Promise<EntityDetails>;
   list(): Promise<Array<Entity>>;
-  newEmptyDetails(): Promise<EntityDetails>;
+  empty(): Promise<EntityDetails>;
 
   // Stateful.
-  insertDetails(entityDetails: EntityDetails): Promise<EntityDetails>;
-  updateDetails(entityDetails: EntityDetails): Promise<EntityDetails>;
+  insert(entityDetails: EntityDetails): Promise<EntityDetails>;
+  update(entityDetails: EntityDetails): Promise<EntityDetails>;
   delete(entityId: number): Promise<EntityDetails>;
 
   // Utilities.
-  simplifyDetails(entityDetails: EntityDetails): Entity;
+  simplify(entityDetails: EntityDetails): Entity;
 }
 
 @Component({
@@ -86,12 +88,16 @@ export default class CraftdoorVue extends Vue {
   async createNewEntity() {
     console.log('createNewEntity()');
     this.selectedEntity = null;
-    this.selectedEntityDetails = await this.api.newEmptyDetails();
+    this.selectedEntityDetails = await this.api.empty();
     this.$emit('update:selected-entity-details', this.selectedEntityDetails);
   }
 
   // Update all properties of selectedEntityDetails with the server.
   async syncSelectedEntity() {
+    // TODO(duckworthd): This method assumes that this.selectedEntityDetails
+    // contains the new state for the selected entity. This will only be the
+    // case if changes made if the field is a prop. It currently isn't but
+    // seems to work anyways.
     console.log('syncSelectedEntity()');
     console.log(JSON.stringify(this.selectedEntityDetails));
 
@@ -103,7 +109,7 @@ export default class CraftdoorVue extends Vue {
     if (this.selectedEntityDetails.id == null) {
       console.log('This is a new entity.');
       return (this.api
-          .insertDetails(this.selectedEntityDetails)
+          .insert(this.selectedEntityDetails)
           .then((entityDetails: EntityDetails) => this.setSelectedEntityById(entityDetails.id))
           .then(this.reloadEntities)
           .then(this.reloadSelectedEntityDetails));
@@ -111,7 +117,7 @@ export default class CraftdoorVue extends Vue {
 
     console.log('This is an existing entity.');
     return (this.api
-        .updateDetails(this.selectedEntityDetails)
+        .update(this.selectedEntityDetails)
         .then(this.reloadEntities)
         .then(this.reloadSelectedEntityDetails));
   }
@@ -141,22 +147,21 @@ export default class CraftdoorVue extends Vue {
     }
 
     // TODO(duckworthd): Simplify logic for finding the name of a entity.
-    const details = await this.api.getDetails(id);
-    this.selectedEntity = this.api.simplifyDetails(details);
+    const details = await this.api.details(id);
+    this.selectedEntity = this.api.simplify(details);
   }
 
   // Reload list of active entities.
   async reloadEntities() {
     console.log('reloadEntities()');
     this.entities = await this.api.list();
+    console.log(`reloadEntities(): ${this.entities.length} loaded.`);
   }
 
   // Reload entity selected from 'entities'.
   @Watch('selectedEntity')
   async reloadSelectedEntityDetails() {
     console.log('reloadSelectedEntityDetails()');
-    // TODO(duckworthd): Vue is warning me about mutating selectedEntityDetails. Find
-    // a way to avoid the issue while communicating the chosen value back to the parent.
     if (this.selectedEntity == null) {
       // No entity has been selected yet.
       console.log('Selected entity is null.');
@@ -168,7 +173,7 @@ export default class CraftdoorVue extends Vue {
     } else {
       // This is an existing entity.
       console.log('Fetching entity details from server.');
-      this.selectedEntityDetails = await this.api.getDetails(this.selectedEntity.id);
+      this.selectedEntityDetails = await this.api.details(this.selectedEntity.id);
     }
     this.$emit('update:selected-entity-details', this.selectedEntityDetails);
   }
@@ -177,7 +182,6 @@ export default class CraftdoorVue extends Vue {
   async mounted() {
     console.log('CraftdoorVue mounted()')
     await this.reloadEntities();
-    console.log(JSON.stringify(this.entities));
   }
 }
 </script>

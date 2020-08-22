@@ -1,5 +1,5 @@
 <template>
-  <div class="people-view container">
+  <div class="key-view container">
     <craftdoor-vue v-bind:api="api"
         v-bind:selected-entity-details.sync="selectedEntityDetails">
       <div class="details-panel" v-if="selectedEntityDetails != null">
@@ -8,8 +8,8 @@
               v-bind:fields.sync="selectedEntityDetails.info">
         </details-box-form>
         <details-box-checkboxes 
-            title="Keys"
-            v-bind:fields.sync="selectedEntityDetails.keys">
+            title="Members"
+            v-bind:fields.sync="selectedEntityDetails.members">
         </details-box-checkboxes>
       </div>
     </craftdoor-vue>
@@ -18,39 +18,39 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import { Member, MemberDetails } from "@/interfaces/api";
+import { Key, KeyDetails } from "@/interfaces/api";
 import CraftdoorVue, { EntityApi } from "@/components/Craftdoor.vue";
 import DetailsBoxForm from "@/components/DetailsBoxForm.vue";
 import DetailsBoxCheckboxes from "@/components/DetailsBoxCheckboxes.vue";
-import MemberHelper from "@/helpers/members.helper";
+import KeyHelper from "@/helpers/keys.helper";
 
-class MembersApi implements EntityApi {
-  details(id: number): Promise<MemberDetails> {
-    return MemberHelper.details(id);
+class KeysApi implements EntityApi {
+  details(id: number): Promise<KeyDetails> {
+    return KeyHelper.details(id);
   }
 
-  list(): Promise<Array<Member>> {
-    return MemberHelper.list();
+  list(): Promise<Array<Key>> {
+    return KeyHelper.list();
   }
 
-  empty(): Promise<MemberDetails> {
-    return MemberHelper.empty();
+  empty(): Promise<KeyDetails> {
+    return KeyHelper.empty();
   }
 
-  insert(details: MemberDetails): Promise<MemberDetails> {
-    return MemberHelper.insert(details);
+  insert(details: KeyDetails): Promise<KeyDetails> {
+    return KeyHelper.insert(details);
   }
 
-  update(details: MemberDetails): Promise<MemberDetails> {
-    return MemberHelper.update(details);
+  update(details: KeyDetails): Promise<KeyDetails> {
+    return KeyHelper.update(details);
   }
 
-  delete(id: number): Promise<MemberDetails> {
-    return MemberHelper.delete(id);
+  delete(id: number): Promise<KeyDetails> {
+    return KeyHelper.delete(id);
   }
 
-  simplify(details: MemberDetails): Member {
-    return MemberHelper.simplify(details);
+  simplify(details: KeyDetails): Key {
+    return KeyHelper.simplify(details);
   }
 }
 
@@ -63,10 +63,10 @@ class MembersApi implements EntityApi {
 })
 export default class PeopleVue extends Vue {
   // Details of currently selected entity shown on RHS.
-  selectedEntityDetails: MemberDetails | null = null;
+  selectedEntityDetails: KeyDetails | null = null;
 
   // Interface to backend.
-  api = new MembersApi()
+  api = new KeysApi()
 }
 </script>
 

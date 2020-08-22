@@ -1,12 +1,12 @@
 import _ from "lodash";
 
-interface HasFieldAttr {
-  field: string;
+interface HasIdAttr {
+  id: string;
 }
 
-export function findField<T extends HasFieldAttr>(field: string, values: Array<T>): (T | null) {
+export function findById<T extends HasIdAttr>(id: string, values: Array<T>): (T | null) {
   for (const value of values) {
-    if (value.field == field) {
+    if (value.id == id) {
       return value;
     }
   }
