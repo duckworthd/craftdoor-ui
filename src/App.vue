@@ -3,7 +3,7 @@
     <div id="nav">
       <router-link to="/">Home</router-link> |
       <router-link to="/people">People</router-link> | 
-      <router-link to="/roles">Roles</router-link> | 
+      <!-- TODO(duckworthd): Add route for keys. -->
       <router-link to="/about">About</router-link>
     </div>
     <router-view/>

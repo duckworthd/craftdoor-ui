@@ -5,15 +5,11 @@
       <div class="details-panel" v-if="selectedEntityDetails != null">
         <details-box-form 
               title="Info"
-              v-bind:fields="selectedEntityDetails.info">
+              v-bind:fields.sync="selectedEntityDetails.info">
         </details-box-form>
         <details-box-checkboxes 
-            title="Roles" 
-            v-bind:fields="selectedEntityDetails.roles">
-        </details-box-checkboxes>
-        <details-box-checkboxes 
             title="Keys"
-            v-bind:fields="selectedEntityDetails.keys">
+            v-bind:fields.sync="selectedEntityDetails.keys">
         </details-box-checkboxes>
       </div>
     </craftdoor-vue>

@@ -1,5 +1,5 @@
 import axios from "@/axios";
-import { Member, MemberRole, MemberDetails, MemberRoleInfo, MemberKeyInfo, MemberInfo } from "@/interfaces/api";
+import { Member, MemberDetails, MemberInfo, Key, MemberKeyInfo } from "@/interfaces/api";
 import { findField, setFieldRandomly } from "@/helpers/utils";
 import _ from 'lodash'
 
@@ -9,20 +9,13 @@ import _ from 'lodash'
 // once the real API is ready.
 ////////////////////////////////////////////////////////////////////////////////
 
-const ALL_MEMBER_ROLE_INFO: Array<MemberRoleInfo> = [
-  {id: 1, name: 'Instructor', selected: false},
-  {id: 2, name: 'Member', selected: false},
-  {id: 3, name: 'Metal Shop', selected: false},
-  {id: 4, name: 'Owner', selected: false},
-  {id: 5, name: 'Visitor', selected: false},
-];
 const ALL_MEMBER_KEY_INFO: Array<MemberKeyInfo> = [
   {id: 1, name: '0x12ab34cd', selected: false},
   {id: 2, name: '0xffa18d2a', selected: false},
 ];
 
 // Generate a member with randomly-assigned roles and keys.
-function generateMemberDetails(id: number, name: string, last_seen: string): MemberDetails {
+function generateMemberDetails(id: number, name: string): MemberDetails {
   // TODO(duckworthd): Merge MemberDetails.info and Member in a reasonable way.
   const info: MemberInfo[] = [
     {
@@ -37,16 +30,7 @@ function generateMemberDetails(id: number, name: string, last_seen: string): Mem
       value: name,
       editable: true
     },
-    {
-      field: 'last_seen', 
-      name: 'Last Seen', 
-      value: last_seen,
-      editable: false
-    },
   ];
-  const roles: MemberRoleInfo[] = _.map(
-    ALL_MEMBER_ROLE_INFO,
-    setFieldRandomly('selected', [true, false]));
   const keys: MemberKeyInfo[] = _.map(
     ALL_MEMBER_KEY_INFO,
     setFieldRandomly('selected', [true, false]));
@@ -54,18 +38,18 @@ function generateMemberDetails(id: number, name: string, last_seen: string): Mem
   return {
     id: id,
     info: info,
-    roles: roles,
     keys: keys
   };
 }
 
 // List of all members. This is a mock of the database sitting on the server.
 const ALL_MEMBER_DETAILS: Array<MemberDetails> = [
-  generateMemberDetails(1, "John Lennon", "Jan 1, 1970"),
-  generateMemberDetails(2, "George Harrison", "Jan 2, 1970"),
-  generateMemberDetails(3, "Paul McCartney", "Jan 3, 1970"),
-  generateMemberDetails(4, "Ringo Starr", "Jan 4, 1970"),
+  generateMemberDetails(1, "John Lennon"),
+  generateMemberDetails(2, "George Harrison"),
+  generateMemberDetails(3, "Paul McCartney"),
+  generateMemberDetails(4, "Ringo Starr"),
 ];
+
 ////////////////////////////////////////////////////////////////////////////////
 // End mock backend.
 ////////////////////////////////////////////////////////////////////////////////
@@ -100,20 +84,12 @@ const MemberHelper = {
         value: '', 
         editable: true
       },
-      {
-        field: 'last_seen', 
-        name: 'Last Seen', 
-        value: 'Never',
-        editable: false
-      },
     ];
-    const all_roles = this.listAllMemberRoleInfo();
     const all_keys = this.listAllMemberKeyInfo();
 
     return {
       id: null,
       info: info,
-      roles: await all_roles,
       keys: await all_keys,
     }
   },
@@ -175,7 +151,6 @@ const MemberHelper = {
           // TODO(duckworthd): Find a better way to update existing member details.
           memberDetails.info = newMemberDetails.info;
           memberDetails.keys = newMemberDetails.keys;
-          memberDetails.roles = newMemberDetails.roles;
           return resolve(_.cloneDeep(memberDetails));
         }
       }
@@ -199,12 +174,6 @@ const MemberHelper = {
     });
   },
 
-  // Lists all valid roles a Member can take on.
-  async listAllMemberRoleInfo(): Promise<Array<MemberRoleInfo>> {
-    // TODO(duckworthd): Replace with actual API call.
-    return Promise.resolve(_.cloneDeep(ALL_MEMBER_ROLE_INFO));
-  },
-
   // Lists all valid keys a Member can take on.
   async listAllMemberKeyInfo(): Promise<Array<MemberKeyInfo>> {
     // TODO(duckworthd): Replace with actual API call.
@@ -225,10 +194,6 @@ const MemberHelper = {
 
   async create(t: Member): Promise<Member> {
     const url = `${CONFIG.API_ENDPOINT}/members`;
-    return await axios.post(url, t);
-  },
-  async addRole(t: MemberRole): Promise<any> {
-    const url = `${CONFIG.API_ENDPOINT}/members/${t.member_id}/roles/${t.role_id}`;
     return await axios.post(url, t);
   },
   async list(): Promise<Member[]> {

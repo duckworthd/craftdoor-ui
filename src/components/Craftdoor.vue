@@ -69,7 +69,6 @@ export interface EntityApi {
   },
   props: {
     api: Object,
-    selectedEntityDetails: Object,
   }
 })
 export default class CraftdoorVue extends Vue {
@@ -88,6 +87,7 @@ export default class CraftdoorVue extends Vue {
     console.log('createNewEntity()');
     this.selectedEntity = null;
     this.selectedEntityDetails = await this.api.newEmptyDetails();
+    this.$emit('update:selected-entity-details', this.selectedEntityDetails);
   }
 
   // Update all properties of selectedEntityDetails with the server.
@@ -159,12 +159,15 @@ export default class CraftdoorVue extends Vue {
     // a way to avoid the issue while communicating the chosen value back to the parent.
     if (this.selectedEntity == null) {
       // No entity has been selected yet.
+      console.log('Selected entity is null.');
       this.selectedEntityDetails = null;
     } else if (this.selectedEntity.id == null) {
       // This is a new entity that doesn't yet have an id.
+      console.log('Selected entity has no ID.');
       this.selectedEntityDetails = null;
     } else {
       // This is an existing entity.
+      console.log('Fetching entity details from server.');
       this.selectedEntityDetails = await this.api.getDetails(this.selectedEntity.id);
     }
     this.$emit('update:selected-entity-details', this.selectedEntityDetails);

@@ -1,36 +1,12 @@
-export interface Door {
-  id: number;
-  name: string;
-}
-
 export interface Member {
   id: number;
   name: string;
 }
 
-export interface Role {
-  id: number;
-  name: string;
-}
-
-export interface MemberRole {
-  member_id: number;
-  role_id: number;
-  expires_at: Date;
-}
-
-export interface DoorRole {
-  door_id: number;
-  role_id: number;
-  daytime_begin_seconds: number;
-  daytime_end_seconds: number;
-}
-
 export interface Key {
   id: number;
+  uuid: string;
   member_id: number;
-  secret: string;
-  access_key: string;
 }
 
 
@@ -47,18 +23,6 @@ export interface MemberInfo {
 
   // Can this field be edited by the UI?
   editable: boolean;
-}
-
-// Role a member may or may not have.
-export interface MemberRoleInfo {
-  // Unique ID for role.
-  id: number;
-
-  // Name of role.
-  name: string;
-
-  // True if current member is assigned to this role.
-  selected: boolean;
 }
 
 // Key a member may or may not own.
@@ -82,37 +46,7 @@ export interface MemberDetails {
   // Information about this member. e.g. id, name, ...
   info: MemberInfo[];
 
-  // Roles available to this member. Includes roles this member is not
-  // yet assigned to.
-  roles: MemberRoleInfo[];
-
   // Keys available to this member. Includes keys this member does not
   // own.
   keys: MemberKeyInfo[];
-}
-
-export interface RoleInfo {
-  field: string;
-  name: string;
-  value: number | string | boolean;
-  editable: boolean;
-}
-
-export interface RoleDoorInfo {
-  id: number;
-  name: string;
-  selected: boolean;
-}
-
-export interface RolePersonInfo {
-  id: number;
-  name: string;
-  selected: boolean;
-}
-
-export interface RoleDetails {
-  id: number | null;
-  info: RoleInfo[];
-  doors: RoleDoorInfo[];
-  people: RolePersonInfo[];
 }
