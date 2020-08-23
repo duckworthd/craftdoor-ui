@@ -4,68 +4,6 @@ import { findById } from "@/helpers/utils";
 import _ from 'lodash'
 
 
-////////////////////////////////////////////////////////////////////////////////
-// The following is a mock backend. Everything here can be safely deleted
-// once the real API is ready.
-////////////////////////////////////////////////////////////////////////////////
-
-const ALL_KEY_MEMBER_INFO: Array<KeyMemberInfo> = [
-  {id: 1, name: 'John Lennon', selected: false, editable: false},
-  {id: 2, name: 'George Harrison', selected: false, editable: false},
-  {id: 3, name: 'Paul McCartney', selected: false, editable: false},
-  {id: 4, name: 'Ringo Starr', selected: false, editable: false},
-];
-
-// Generate a Key with randomly-assigned roles and keys.
-function generateDetails(id: number, name: string, memberId: number): KeyDetails {
-  // TODO(duckworthd): Merge KeyDetails.info and Key in a reasonable way.
-  const info: Field[] = [
-    {
-      id: 'id', 
-      name: 'ID', 
-      value: id,
-      editable: false,
-    },
-    {
-      id: 'uuid', 
-      name: 'UUID', 
-      value: name,
-      editable: true,
-    },
-    {
-      id: 'member_id', 
-      name: 'Member ID', 
-      value: memberId,
-      editable: false,
-    },
-  ];
-  const members: KeyMemberInfo[] = _.map(
-    ALL_KEY_MEMBER_INFO,
-    function(member: KeyMemberInfo): KeyMemberInfo { 
-        const newMember = _.cloneDeep(member);
-        newMember.selected = (memberId == member.id);
-        return newMember;
-    });
-
-  return {
-    id: id,
-    info: info,
-    members: members,
-  };
-}
-
-// List of all Keys. This is a mock of the database sitting on the server.
-const ALL_KEY_DETAILS: Array<KeyDetails> = [
-  generateDetails(1, "0x012345", 1),
-  generateDetails(2, "0x543210", 2),
-  generateDetails(3, "0xffffff", 3),
-  generateDetails(4, "0xa092a0", 1),
-];
-
-////////////////////////////////////////////////////////////////////////////////
-// End mock backend.
-////////////////////////////////////////////////////////////////////////////////
-
 const KeyHelper = {
   // Converts a KeyDetails object to a Keys object.
   //
@@ -83,33 +21,14 @@ const KeyHelper = {
   //
   // This Key does not yet exist on the server.
   async empty(): Promise<KeyDetails> {
-    const info: Field[] = [
-      {
-        id: 'id',
-        name: 'ID',
-        value: 'Not yet assigned.',
-        editable: false,
-      },
-      {
-        id: 'uuid',
-        name: 'UUID',
-        value: '',
-        editable: true,
-      },
-      {
-        id: 'member_id',
-        name: 'Member ID',
-        value: -1,
-        editable: false,
-      },
-    ];
-    const members: KeyMemberInfo[] = await this.members();
-
-    return {
-      id: null,
-      info: info,
-      members: members,
-    }
+    const url = `${CONFIG.API_ENDPOINT}/keys/new`;
+    const update = {
+      member_id: -1
+    };
+    return axios.post(url, update).then(response => {
+      const key: RawKey = response.data;
+      return this.details(key.id);
+    });
   },
 
   // Get KeyDetails corresponding to a Key by id.
@@ -164,11 +83,17 @@ const KeyHelper = {
   //
   // Returned KeyDetails object should be identical to the argument.
   async update(details: KeyDetails): Promise<KeyDetails> {
-    // Update member.
-    const update = {}  // RawMember
+    const update = {}  // RawKey
     for (const detail of details.info) {
+      if (detail.id == "name") {
+        // TODO(duckworthd): This is an ugly hack. The frontend expects a "name"
+        // field, but the backend expects "uuid". Find a better way to translate
+        // between frontend and backend representations.
+        continue;
+      }
       update[detail.id] = detail.value;
     }
+    console.log(`update: ${JSON.stringify(update)}`);
     const url = `${CONFIG.API_ENDPOINT}/keys/${details.id}`;
     return axios.put(url, update);
   },
@@ -204,6 +129,8 @@ const KeyHelper = {
     return [
       {id: "id", name: "ID", value: key.id, editable: false},
       {id: "name", name: "Name", value: key.uuid, editable: true},
+      {id: "uuid", name: "UUID", value: key.uuid, editable: true},
+      {id: "member_id", name: "Member ID", value: key.member_id, editable: false},
     ]
   },
 
