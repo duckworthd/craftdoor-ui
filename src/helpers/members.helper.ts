@@ -1,58 +1,7 @@
 import axios from "@/axios";
-import { Member, MemberDetails, Field, Key, MemberKeyInfo } from "@/interfaces/api";
+import { Member, MemberDetails, Field, MemberKeyInfo, RawKey, RawMember, RawMemberDetails } from "@/interfaces/api";
 import { findById, setFieldRandomly } from "@/helpers/utils";
-import _ from 'lodash'
-
-
-////////////////////////////////////////////////////////////////////////////////
-// The following is a mock backend. Everything here can be safely deleted
-// once the real API is ready.
-////////////////////////////////////////////////////////////////////////////////
-
-const ALL_MEMBER_KEY_INFO: Array<MemberKeyInfo> = [
-  {id: 1, name: '0x12ab34cd', selected: false, editable: true},
-  {id: 2, name: '0xffa18d2a', selected: false, editable: true},
-];
-
-// Generate a member with randomly-assigned roles and keys.
-function generateMemberDetails(id: number, name: string): MemberDetails {
-  // TODO(duckworthd): Merge MemberDetails.info and Member in a reasonable way.
-  const info: Field[] = [
-    {
-      id: 'id', 
-      name: 'ID', 
-      value: id,
-      editable: false
-    },
-    {
-      id: 'name', 
-      name: 'Name', 
-      value: name,
-      editable: true
-    },
-  ];
-  const keys: MemberKeyInfo[] = _.map(
-    ALL_MEMBER_KEY_INFO,
-    setFieldRandomly('selected', [true, false]));
-
-  return {
-    id: id,
-    info: info,
-    keys: keys
-  };
-}
-
-// List of all members. This is a mock of the database sitting on the server.
-const ALL_MEMBER_DETAILS: Array<MemberDetails> = [
-  generateMemberDetails(1, "John Lennon"),
-  generateMemberDetails(2, "George Harrison"),
-  generateMemberDetails(3, "Paul McCartney"),
-  generateMemberDetails(4, "Ringo Starr"),
-];
-
-////////////////////////////////////////////////////////////////////////////////
-// End mock backend.
-////////////////////////////////////////////////////////////////////////////////
+import _, { keys } from 'lodash'
 
 const MemberHelper = {
   // Converts a MemberDetails object to a Members object.
@@ -71,7 +20,7 @@ const MemberHelper = {
   //
   // This member does not yet exist on the server.
   async empty(): Promise<MemberDetails> {
-    const info = [
+    const info: Field[] = [
       {
         id: 'id', 
         name: 'ID', 
@@ -85,25 +34,38 @@ const MemberHelper = {
         editable: true
       },
     ];
-    const all_keys = _.cloneDeep(ALL_MEMBER_KEY_INFO);
+    const keys: MemberKeyInfo[] = await this.keys();
 
     return {
       id: null,
       info: info,
-      keys: all_keys,
+      keys: keys,
     }
   },
 
   // Get MemberDetails corresponding to a member by id.
   async details(id: number): Promise<MemberDetails> {
-    // TODO(duckworthd): Replace with actual API call.
-    return new Promise((resolve, reject) => {
-      for (const details of ALL_MEMBER_DETAILS) {
-        if (details.id == id) {
-          return resolve(_.cloneDeep(details));
-        }
+    const url = `${CONFIG.API_ENDPOINT}/members/${id}`;
+    const member = axios.get(url)
+    const allKeys = this.keys();
+    return Promise.all([member, allKeys]).then(results => {
+      const member: RawMemberDetails = results[0].data;
+      const allKeys: MemberKeyInfo[] = results[1];
+
+      const id: number = member.member.id;
+      const info: Field[] = this.toFields(member.member);
+
+      // Show keys assigned to member first.
+      const toMemberKeyInfo = _.partial(this.toMemberKeyInfo, id)
+      const oldKeys: MemberKeyInfo[] = _.map(member.keys, toMemberKeyInfo);
+      const newKeys: MemberKeyInfo[] = this.filterMemberKeyInfo(allKeys, oldKeys);
+      const keys: MemberKeyInfo[] = _.concat(oldKeys, newKeys);
+
+      return {
+        id: id,
+        info: info,
+        keys: keys,
       }
-      return reject(new Error(`Unable to find member with id=${id}.`));
     });
   },
 
@@ -114,47 +76,60 @@ const MemberHelper = {
   //
   // This function fails if the member already exists.
   async insert(details: MemberDetails): Promise<MemberDetails> {
-    // TODO(duckworthd): Replace with actual API call.
-    return new Promise((resolve, reject) => {
-      if (details.id != null) {
-        return reject(new Error(`Member with memberId=${details.id} already exists.`));
+    // Create new member.
+    const member = {}  // RawMember, but without 'id'.
+    for (const detail of details.info) {
+      if (detail.id == "id") { // auto-assigned.
+        continue;
       }
+      member[detail.id] = detail.value;
+    }
+    const memberUpdateUrl = `${CONFIG.API_ENDPOINT}/members`;
+    const memberUpdate = axios.post(memberUpdateUrl, member);
 
-      // Find the next available member id.
-      const ids: Array<number> = _.map(
-        ALL_MEMBER_DETAILS,
-        (memberDetails: MemberDetails) => memberDetails.id as number);
-      const nextId = (_.max(ids) || 0) + 1;
+    return memberUpdate.then(response => {
+      // Copy ID into details.
+      const newDetails = _.cloneDeep(details);
+      newDetails.id = response.data.id;
+      const idField = findById('id', newDetails.info) as Field;
+      idField.value = response.data.id;
 
-      // Set id field of result.
-      const result: MemberDetails = _.cloneDeep(details);
-      result.id = nextId;
-
-      const id = findById("id", result.info) as Field;
-      id.value = nextId;
-
-      // Save new member details in database.
-      ALL_MEMBER_DETAILS.push(result);
-
-      return resolve(_.cloneDeep(result));
-    });
+      // Update details.
+      return this.update(newDetails);
+    })
   },
 
   // Updates an existing member's details.
   //
   // Returned MemberDetails object should be identical to the argument.
-  async update(newDetails: MemberDetails): Promise<MemberDetails> {
-    // TODO(duckworthd): Replace with actual API call.
-    return new Promise((resolve, reject) => {
-      for (const details of ALL_MEMBER_DETAILS) {
-        if (details.id == newDetails.id) {
-          // TODO(duckworthd): Find a better way to update existing member details.
-          details.info = newDetails.info;
-          details.keys = newDetails.keys;
-          return resolve(_.cloneDeep(details));
-        }
+  async update(details: MemberDetails): Promise<MemberDetails> {
+    // Update member.
+    const member = {}  // RawMember
+    for (const detail of details.info) {
+      member[detail.id] = detail.value;
+    }
+    const memberUpdateUrl = `${CONFIG.API_ENDPOINT}/members/${details.id}`;
+    const memberUpdate = axios.put(memberUpdateUrl, member);
+
+    // Updated keys re-assigned to this member.
+    const keyUpdates = [];
+    for (const info of details.keys) {
+      // TODO(duckworthd): If a key WAS selected and now ISN'T, then set its member_id to no one...
+      if (info.selected) {
+        const keyUpdateUrl = `${CONFIG.API_ENDPOINT}/keys/${info.id}`;
+        const key = {
+          id: info.id,
+          uuid: info.name,
+          member_id: details.id,
+        };
+        const keyUpdate = axios.put(keyUpdateUrl, key);
+        keyUpdates.push(keyUpdate)
       }
-      return reject(new Error(`Unable to find member with id=${newDetails.id}.`));
+    }
+
+    // Fetch updated details after all updates resolve.
+    return Promise.all(_.concat([memberUpdate], keyUpdates)).then(responses => {
+      return this.details(details.id as number);
     });
   },
 
@@ -162,22 +137,70 @@ const MemberHelper = {
   //
   // Returns state of MemberDetails imediately before deletion.
   async delete(id: number): Promise<MemberDetails> {
-    // TODO(duckworthd): Replace with actual API call.
-    return new Promise((resolve, reject) => {
-      const removedMemberDetails = _.remove(
-        ALL_MEMBER_DETAILS,
-        (memberDetails: MemberDetails) => memberDetails.id == id);
-      if (removedMemberDetails.length > 0) {
-        return resolve(_.cloneDeep(removedMemberDetails[0]));
+    const url = `${CONFIG.API_ENDPOINT}/members/${id}`;
+    return axios.delete(url).then(response => {
+      // TODO(duckworthd): Fill in with actual details.
+      return {
+        id: id,
+        info: [],
+        keys: []
       }
-      return reject(new Error(`Unable to find member with memberId=${id}.`));
     });
   },
 
   // Lists all registered members.
   async list(): Promise<Array<Member>> {
-    return ALL_MEMBER_DETAILS.map(this.simplify);
+    const url = `${CONFIG.API_ENDPOINT}/members`;
+    return axios.get(url).then(response => response.data);
   },
+  
+  // Filters out members of 'all' that are already in 'old'.
+  filterMemberKeyInfo(all: MemberKeyInfo[], old: MemberKeyInfo[]): MemberKeyInfo[] {
+    const visited = new Set();
+    for (const key of old) {
+      visited.add(key.id);
+    }
+
+    const notVisited = (info: MemberKeyInfo): boolean => {
+      return !visited.has(info.id);
+    }
+
+    const remaining: MemberKeyInfo[] = _.filter(all, notVisited);
+    return remaining;
+  },
+
+  // Convert a raw member to a Field[].
+  toFields(member: RawMember): Array<Field> {
+    return [
+      {id: "id", name: "ID", value: member.id, editable: false},
+      {id: "name", name: "Name", value: member.name, editable: true},
+    ]
+  },
+
+  // Convert a raw key to a MemberKeyInfo object.
+  toMemberKeyInfo(memberID: number, key: RawKey): MemberKeyInfo {
+    return {
+      id: key.id,
+      name: key.uuid,
+      selected: (memberID == key.member_id),
+      editable: true,
+    }
+  },
+
+  // Get all available keys.
+  keys(): Promise<Array<MemberKeyInfo>> {
+    const url = `${CONFIG.API_ENDPOINT}/keys`;
+    const toKey = (key: RawKey) => {
+        const result = this.toMemberKeyInfo(0, key);
+        result.selected = false;
+        return result;
+    };
+
+    return axios.get(url).then(response => {
+      return _.map(response.data, toKey);
+    });
+  },
+
 };
 
 export default MemberHelper;

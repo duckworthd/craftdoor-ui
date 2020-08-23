@@ -65,3 +65,22 @@ export interface KeyDetails {
   info: Field[];
   members: KeyMemberInfo[];
 }
+
+// Key as returned by /keys
+export interface RawKey {
+  id: number;
+  uuid: string;
+  member_id: number;
+}
+
+// Key as returned by /members
+export interface RawMember {
+  id: number;
+  name: string;
+}
+
+// Key as returned by /members
+export interface RawMemberDetails {
+  member: RawMember;
+  keys: RawKey[];
+}
