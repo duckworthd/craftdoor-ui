@@ -52,17 +52,17 @@ export interface EntityDetails {
 
 export interface EntityApi {
   // Stateless.
-  details(entityId: number): Promise<EntityDetails>;
+  details(id: number): Promise<EntityDetails>;
   list(): Promise<Array<Entity>>;
   empty(): Promise<EntityDetails>;
 
   // Stateful.
-  insert(entityDetails: EntityDetails): Promise<EntityDetails>;
-  update(entityDetails: EntityDetails): Promise<EntityDetails>;
-  delete(entityId: number): Promise<EntityDetails>;
+  insert(details: EntityDetails): Promise<EntityDetails>;
+  update(details: EntityDetails): Promise<EntityDetails>;
+  delete(id: number): Promise<EntityDetails>;
 
   // Utilities.
-  simplify(entityDetails: EntityDetails): Entity;
+  simplify(details: EntityDetails): Entity;
 }
 
 @Component({
@@ -71,6 +71,10 @@ export interface EntityApi {
   },
   props: {
     api: Object,
+
+    // TODO(duckworthd): selectedEntityDetails should be here. We want changes to that 
+    // object to affect this.selectedEntityDetails. Adding it now causes Vue to
+    // complain about code below changing its value.
   }
 })
 export default class CraftdoorVue extends Vue {
