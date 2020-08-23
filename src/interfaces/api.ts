@@ -79,8 +79,14 @@ export interface RawMember {
   name: string;
 }
 
-// Key as returned by /members
+// Member as returned by /members/<id>
 export interface RawMemberDetails {
   member: RawMember;
   keys: RawKey[];
+}
+
+// Key as returned by /keys/<id>
+export interface RawKeyDetails {
+  key: RawKey;
+  member: RawMember | null;
 }
