@@ -44,7 +44,9 @@ const KeyHelper = {
       const info: Field[] = this.toFields(key.key);
 
       // Show keys assigned to member first.
-      const toKeyMemberInfo = _.partial(this.toKeyMemberInfo, key.key.member_id)
+      const toKeyMemberInfo = (member: RawMember): KeyMemberInfo => {
+        return this.toKeyMemberInfo(key.key.member_id, member);
+      }
       const members: KeyMemberInfo[] = _.map(allMembers, toKeyMemberInfo);
       console.log(`members: ${JSON.stringify(members)}`);
 

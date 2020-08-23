@@ -1,7 +1,7 @@
 import axios from "@/axios";
 import { Member, MemberDetails, Field, MemberKeyInfo, RawKey, RawMember, RawMemberDetails } from "@/interfaces/api";
-import { findById, setFieldRandomly } from "@/helpers/utils";
-import _, { keys } from 'lodash'
+import { findById } from "@/helpers/utils";
+import _ from 'lodash'
 
 const MemberHelper = {
   // Converts a MemberDetails object to a Members object.
@@ -56,7 +56,9 @@ const MemberHelper = {
       const info: Field[] = this.toFields(member.member);
 
       // Show keys assigned to member first.
-      const toMemberKeyInfo = _.partial(this.toMemberKeyInfo, id)
+      const toMemberKeyInfo = (key: RawKey): MemberKeyInfo => {
+        return this.toMemberKeyInfo(id, key);
+      }
       const oldKeys: MemberKeyInfo[] = _.map(member.keys, toMemberKeyInfo);
       const newKeys: MemberKeyInfo[] = this.filterMemberKeyInfo(allKeys, oldKeys);
       const keys: MemberKeyInfo[] = _.concat(oldKeys, newKeys);

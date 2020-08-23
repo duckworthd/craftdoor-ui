@@ -24,10 +24,11 @@ This nodejs project is the webapp frontend for [craftdoor](https://github.com/pa
   ```
   $ npm run build
   ```
-1. Run linter,
+1. Copy the built code to `craftdoor`'s `/assets/static`.
   ```
-  $ npm run lint
+  $ mv dist ${CRAFTDOOR}/assets/static
   ```
+1. Follow instructions to launch `craftdoor` backend.
 
-###Customize configuration
+### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
